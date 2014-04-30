@@ -1,8 +1,9 @@
-import java.util.Vector;
+import java.util.ArrayList;
 
 
-public class ICServer {
+public class ICServer
+{
 
-	private Vector<Client> clients;
+	private ArrayList<Connection> connections;
 
 }
