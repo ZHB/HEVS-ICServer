@@ -77,25 +77,7 @@ public class ICServer
 					Client c  = new Client(clientSocket);
 					
 					// add a new observer to the client observers list
-					c.addObserver(new ServerObserver() 
-						{
-							@Override
-							public void notifyDisconnection(Client c) 
-							{
-								// remove the client from the clients list		
-								clients.remove(c);
-								
-								// log the client disconnection
-								logger.info("The client " + c.getNickname() + " has disconnected from the server");
-							}
-
-							@Override
-							public void notifyMessage(String m) 
-							{
-								broadcast(m);
-							}
-						}
-					);
+					c.addObserver(new SrvObserver());
 					
 					clients.add(c);
 					logger.info("A new client logged in");
@@ -105,6 +87,30 @@ public class ICServer
 					e.printStackTrace();
 				}
 			}
+		}
+	}
+	
+	/**
+	 * Internal class that observe client actions.
+	 * 
+	 * @author Vince
+	 *
+	 */
+	public class SrvObserver implements ServerObserver {
+		@Override
+		public void notifyDisconnection(Client c) 
+		{
+			// remove the client from the clients list		
+			clients.remove(c);
+			
+			// log the client disconnection
+			logger.info("The client " + c.getNickname() + " has disconnected from the server");
+		}
+
+		@Override
+		public void notifyMessage(String m) 
+		{
+			broadcast(m);
 		}
 	}
 }
