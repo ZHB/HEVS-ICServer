@@ -15,11 +15,13 @@ public class ICServer
 	private LoggerManager loggerMgr = new LoggerManager();
 	private Logger logger;
 	private ArrayList<Client> clients = new ArrayList<Client>();
+	private UserManager um = new UserManager();
 	
 	public static final int SERVER_PORT = 1089;
 
 	public ICServer(int logLevel) 
 	{
+				
         try {
         	// initiate a new logger with the given level
         	logger = loggerMgr.getLogger(logLevel);
