@@ -1,11 +1,14 @@
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -15,87 +18,79 @@ import java.util.ArrayList;
  */
 public class UserManager implements Serializable
 {
-	// Pour la sérialisation
-	static final long serialVersionUID = 20052014L;
+
+	private static final String userFilePath = "./data/users.txt";
+	private HashMap<String, User> users;
 	
-	private ArrayList<User> users;
-	
-	public UserManager()
-	{
-		users = new ArrayList<User>();
+	public UserManager() {
+		this.users = load();
 	}
 	
-	public void showUsers()
-	{
-		for (User u : users)
-		{
-			System.out.println(u.login);
-		}
+	// load the user HashMap
+	public HashMap<String, User> load() {
+		
+		try{
+	        File toRead = new File(userFilePath);
+	        FileInputStream fis=new FileInputStream(toRead);
+	        ObjectInputStream ois=new ObjectInputStream(fis);
+
+	        HashMap<String, User> users = (HashMap<String, User>)ois.readObject();
+
+	        ois.close();
+	        fis.close();
+	        
+	        //print All data in MAP
+	        for(Map.Entry<String, User> u :users.entrySet()){
+	            System.out.println(u.getKey()+" : "+u.getValue());
+	        }
+	    }catch(Exception e){}
+		
+		return users;
 	}
 	
-	public void addUser(User u)
+	public User getByLogin(String login) throws IOException, ClassNotFoundException
 	{
-		users.add(u);
-	}
-	
-	/**
-	 * Load users data from a text file
-	 * @author SB
-	 */
-	public void load()
-	{
-		try
-		{ 
-			//String temp = System.getProperty("java.io.tmpdir"); // Windows temp folder
-			String path = "C:/Temp/users.txt";
-			
-			// Check if file exists
-			File f = new File(path);
-			if(!f.exists())
-			{
-				// if not, create one with save method
-				save();
-			}
-			
-			FileInputStream file = new FileInputStream(path);
-			ObjectInputStream ois = new ObjectInputStream(file);
-			users.addAll((ArrayList<User>) ois.readObject());
-			
-			System.out.println("Load done !");
-		}
-		catch (IOException e)
+		// Check if file exists
+		File f = new File(userFilePath);
+		
+		if(!f.exists())
 		{
-			e.printStackTrace();
+			return null;
 		}
-		catch (ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		}
+		
+		FileInputStream file = new FileInputStream(userFilePath);
+		ObjectInputStream ois = new ObjectInputStream(file);
+		
+		// read file and create the HashMap
+		users = (HashMap<String, User>) ois.readObject();
+		 
+		// get the user by his login (the HashMap key)
+		//System.out.println("getByLogin returned the user " + users.get(login).getLogin());
+		return users.get(login);
 	}
 	
 	/**
 	 * Save users data on a text file
 	 * @author SB
 	 */
-	public void save()
+	public void save(User user)
 	{
-		try
-		{
-			//String temp = System.getProperty("java.io.tmpdir");
-			String path = "C:/Temp/users.txt";
-			
-			FileOutputStream fichier = new FileOutputStream(path);
-			ObjectOutputStream oos = new ObjectOutputStream(fichier);
-			
-			oos.writeObject(users);
-			oos.flush();
-			oos.close();
-			
-			System.out.println("Save done !");
-		}
-		catch (java.io.IOException e)
-		{
-			e.printStackTrace();
-		}
+		// add the user to the map
+		users.put(user.getLogin(), user);
+		
+	    try{
+	    	File fileOne=new File(userFilePath);
+	    	FileOutputStream fos=new FileOutputStream(fileOne);
+	        ObjectOutputStream oos=new ObjectOutputStream(fos);
+	        
+	        oos.writeObject(users);
+	        oos.flush();
+	        oos.close();
+	        fos.close();
+	    }
+	    catch(Exception e)
+	    {
+	    	e.printStackTrace();
+	    }
 	}
 }

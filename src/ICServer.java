@@ -15,9 +15,9 @@ public class ICServer
 	private LoggerManager loggerMgr = new LoggerManager();
 	private Logger logger;
 	private ArrayList<Client> clients = new ArrayList<Client>();
-	private UserManager um = new UserManager();
+	private UserManager userMgr = new UserManager();
 	
-	public static final int SERVER_PORT = 1089;
+	public static final int SERVER_PORT = 1096;
 
 	public ICServer(int logLevel) 
 	{
@@ -76,7 +76,7 @@ public class ICServer
 				{
 					// accept a new client and create a socket
 					clientSocket = serverSocket.accept();
-					Client c  = new Client(clientSocket);
+					Client c  = new Client(clientSocket, userMgr);
 					
 					// add a new observer to the client observers list
 					c.addObserver(new SrvObserver());
