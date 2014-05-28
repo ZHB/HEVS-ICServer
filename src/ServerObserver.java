@@ -5,4 +5,6 @@ public interface ServerObserver {
 	
 	public void notifyMessage(String m);
 	
+	public void notifyRegistration(String m);
+	
 }

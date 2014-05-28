@@ -1,12 +1,10 @@
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,6 +61,9 @@ public class UserManager implements Serializable
 		
 		// read file and create the HashMap
 		users = (HashMap<String, User>) ois.readObject();
+		
+		file.close();
+		ois.close();
 		 
 		// get the user by his login (the HashMap key)
 		//System.out.println("getByLogin returned the user " + users.get(login).getLogin());
@@ -92,5 +93,37 @@ public class UserManager implements Serializable
 	    {
 	    	e.printStackTrace();
 	    }
+	}
+	
+	public boolean login(String name, String pwd) throws IOException, ClassNotFoundException {
+		
+		// Check if file exists
+		File f = new File(userFilePath);
+		
+		if(!f.exists())
+		{
+			return false;
+		}
+		
+		FileInputStream file = new FileInputStream(userFilePath);
+		ObjectInputStream ois = new ObjectInputStream(file);
+		
+		// read file and create the HashMap
+		users = (HashMap<String, User>) ois.readObject();
+		
+		file.close();
+		ois.close();
+		 
+		// get the user by his login (the HashMap key)
+		//System.out.println("getByLogin returned the user " + users.get(login).getLogin());
+		User u = users.get(name);
+		
+
+		// check if given strings are equals
+		if(u.getPwd().equals(pwd.trim())) {
+			return true;
+		}
+		
+		return false;
 	}
 }

@@ -10,6 +10,8 @@ public interface ServerObservable {
 	 */
 	public void notifyDisconnection();
 	
+	public void notifyRegistration();
+	
 	public void notifyMessage(String m);
 	
 }

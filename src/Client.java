@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.rmi.server.UID;
 import java.util.ArrayList;
 
 
@@ -16,6 +17,7 @@ public class Client implements ServerObservable  {
 	private ObjectOutputStream outputObjectToClient = null;
     private ObjectInputStream inputObjectFromClient = null;
 	private String nickname;
+	private UID id;
 	private ArrayList<ServerObserver> serverObservers = new ArrayList<ServerObserver>();
 	private UserManager userMgr;
 
@@ -29,6 +31,7 @@ public class Client implements ServerObservable  {
 
 		this.clientSocket = clientSocket;
 		this.userMgr = userMgr;
+		this.id = new UID();
 
 		try 
 		{
@@ -51,6 +54,14 @@ public class Client implements ServerObservable  {
 		}
 	}
 	
+	public UID getId() {
+		return id;
+	}
+
+	public void setId(UID id) {
+		this.id = id;
+	}
+
 	/**
 	 * 
 	 * @return the nickname of the person
@@ -120,13 +131,14 @@ public class Client implements ServerObservable  {
 				{
 
 					messageType = inputObjectFromClient.readByte();
+					String login;
+					String pwd;
 					
-		
 					switch(messageType)
 					{
 					case 1: // register
-						String login = inputObjectFromClient.readUTF();
-						String pwd = inputObjectFromClient.readUTF();
+						login = inputObjectFromClient.readUTF();
+						pwd = inputObjectFromClient.readUTF();
 						
 						// lire le fichier des utilisateurs enregistrés.
 						if(userMgr.getByLogin(login) == null) 
@@ -146,7 +158,34 @@ public class Client implements ServerObservable  {
 						
 					    break;
 					case 2: // Login
-					    System.out.println("Message B: " + inputObjectFromClient.readUTF());
+						login = inputObjectFromClient.readUTF();
+						pwd = inputObjectFromClient.readUTF();
+						
+						// check if the user exist. In that case, check the given password with the password in users list
+						if(userMgr.getByLogin(login) != null) 
+						{
+							
+							if(userMgr.login(login, pwd)) {
+								
+								
+								outputObjectToClient.writeByte(53); // user saved command
+								outputObjectToClient.writeUTF("You successfully logged in");
+								outputObjectToClient.flush();
+							}
+							else
+							{
+								outputObjectToClient.writeByte(52); // user saved command
+								outputObjectToClient.writeUTF("The user " + login + " doesn't exist or the password is incorrect");
+								outputObjectToClient.flush();
+							}
+						} 
+						else 
+						{
+							outputObjectToClient.writeByte(52); // user already registred command
+							outputObjectToClient.writeUTF("The user " + login + " doesn't exist or the password is incorrect");
+							outputObjectToClient.flush();
+						}
+						
 					    break;
 					case 3: // Send message
 					    System.out.println("Message C [1]: " + inputObjectFromClient.readUTF());
@@ -191,6 +230,14 @@ public class Client implements ServerObservable  {
 		}
 	}
 
+	public ObjectOutputStream getOutputObjectToClient() {
+		return outputObjectToClient;
+	}
+
+	public void setOutputObjectToClient(ObjectOutputStream outputObjectToClient) {
+		this.outputObjectToClient = outputObjectToClient;
+	}
+
 	@Override
 	public void addObserver(ServerObserver obs) 
 	{
@@ -219,5 +266,14 @@ public class Client implements ServerObservable  {
 		{
 			obs.notifyMessage(m);
 		}
+	}
+
+	@Override
+	public void notifyRegistration() {
+		for(ServerObserver obs : serverObservers) 
+		{
+			//obs.notifyMessage(m);
+		}
+		
 	}
 }

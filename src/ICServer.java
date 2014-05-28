@@ -3,6 +3,9 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import logger.LoggerManager;
@@ -14,7 +17,12 @@ public class ICServer
 	private Socket clientSocket = null;
 	private LoggerManager loggerMgr = new LoggerManager();
 	private Logger logger;
-	private ArrayList<Client> clients = new ArrayList<Client>();
+	
+	//private ArrayList<Client> clients = new ArrayList<Client>();
+	
+	private HashMap<String, Client> clients = new HashMap<String, Client>();
+	
+	
 	private UserManager userMgr = new UserManager();
 	
 	public static final int SERVER_PORT = 1096;
@@ -52,9 +60,9 @@ public class ICServer
 	 * @param message
 	 */
 	public void broadcast(String message) {
-		for(Client c : clients) 
-		{
-			c.sendMessage(message);
+		
+		for (String key : clients.keySet()) {
+			clients.get(key).sendMessage(message);
 		}
 	}
 	
@@ -81,7 +89,9 @@ public class ICServer
 					// add a new observer to the client observers list
 					c.addObserver(new SrvObserver());
 					
-					clients.add(c);
+					clients.put(c.getId().toString(), c);
+					
+					//clients.add(c);
 					logger.info("A new client logged in");
 				} 
 				catch (IOException e)
@@ -105,6 +115,7 @@ public class ICServer
 			// remove the client from the clients list		
 			clients.remove(c);
 			
+			
 			// log the client disconnection
 			logger.info("The client " + c.getNickname() + " has disconnected from the server");
 		}
@@ -113,6 +124,12 @@ public class ICServer
 		public void notifyMessage(String m) 
 		{
 			broadcast(m);
+		}
+
+		@Override
+		public void notifyRegistration(String m) {
+			// TODO Auto-generated method stub
+			
 		}
 	}
 }
