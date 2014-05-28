@@ -20,7 +20,7 @@ public class UserManager implements Serializable
 {
 
 	private static final String userFilePath = "./data/users.txt";
-	private HashMap<String, User> users;
+	private HashMap<String, User> users = new HashMap<String, User>();
 	
 	public UserManager() {
 		this.users = load();
