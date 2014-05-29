@@ -5,6 +5,6 @@ public interface ServerObserver {
 	
 	public void notifyMessage(String m);
 	
-	public void notifyRegistration(String m);
+	public void broadcastRegistration(Client c);
 	
 }

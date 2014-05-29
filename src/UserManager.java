@@ -8,7 +8,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-
 /**
  * This class save/load users informations
  * @author SB
@@ -24,6 +23,14 @@ public class UserManager implements Serializable
 		this.users = load();
 	}
 	
+	public HashMap<String, User> getUsers() {
+		return users;
+	}
+
+	public void setUsers(HashMap<String, User> users) {
+		this.users = users;
+	}
+
 	// load the user HashMap
 	public HashMap<String, User> load() {
 		

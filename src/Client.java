@@ -7,19 +7,18 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.rmi.server.UID;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class Client implements ServerObservable  {
 	
 	private Socket clientSocket = null;
-	private BufferedReader inputFromClient;
-	private PrintWriter outputToClient;
 	private ObjectOutputStream outputObjectToClient = null;
     private ObjectInputStream inputObjectFromClient = null;
-	private String nickname;
 	private UID id;
 	private ArrayList<ServerObserver> serverObservers = new ArrayList<ServerObserver>();
 	private UserManager userMgr;
+	private User user = new User();
 
 	/**
      * Client Constructor
@@ -34,12 +33,7 @@ public class Client implements ServerObservable  {
 		this.id = new UID();
 
 		try 
-		{
-			// start input and output streams to communicate with connected users
-			this.inputFromClient = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-			this.outputToClient = new PrintWriter(clientSocket.getOutputStream());
-			
-			
+		{	
 			this.outputObjectToClient = new ObjectOutputStream(clientSocket.getOutputStream());
             this.inputObjectFromClient = new ObjectInputStream(clientSocket.getInputStream());
 
@@ -63,31 +57,13 @@ public class Client implements ServerObservable  {
 	}
 
 	/**
-	 * 
-	 * @return the nickname of the person
-	 */
-	public String getNickname() {
-		return nickname;
-	}
-
-	/**
-	 * It's the nickname of a connected client. Without this nickname, a user can't send
-	 * message through socket, so it's important to set it at first
-	 * 
-	 * @param nickname is an arbitrary String
-	 */
-	public void setNickname(String nickname) {
-		this.nickname = nickname;
-	}
-
-	/**
 	 * Send a message to the output stream
 	 * 
 	 * @param message is a message String
 	 */
 	public void sendMessage(String message) {
-		outputToClient.println(message);
-		outputToClient.flush();
+		//outputToClient.println(message);
+		//outputToClient.flush();
 	}
 	
 	/**
@@ -97,10 +73,9 @@ public class Client implements ServerObservable  {
 	 * @return void
 	 */
 	public void closeConnections() {
+		
 		try 
 		{
-			inputFromClient.close();
-			outputToClient.close();
 			outputObjectToClient.close();
 			inputObjectFromClient.close();
 			clientSocket.close();
@@ -127,7 +102,7 @@ public class Client implements ServerObservable  {
 				
 				byte messageType;
 				
-				while(!done) 
+				while(true) 
 				{
 
 					messageType = inputObjectFromClient.readByte();
@@ -143,11 +118,25 @@ public class Client implements ServerObservable  {
 						// lire le fichier des utilisateurs enregistrés.
 						if(userMgr.getByLogin(login) == null) 
 						{
-							userMgr.save(new User(login, pwd));
+							// create a user and save it to the users file
+							user.setLogin(login);
+							user.setPwd(pwd);
+							user.setConnected(false);
+							userMgr.save(user);
 							
 							outputObjectToClient.writeByte(50); // user saved command7
 							outputObjectToClient.writeUTF("You have been successfully registered to the chat");
 							outputObjectToClient.flush();
+							outputObjectToClient.reset();
+							
+							// Send the created user to the client
+							outputObjectToClient.writeByte(60);
+							outputObjectToClient.writeObject(user);
+							outputObjectToClient.flush();
+							
+							
+							// sent users list to ALL clients
+							broadcastRegistration();
 						} 
 						else 
 						{
@@ -162,15 +151,40 @@ public class Client implements ServerObservable  {
 						pwd = inputObjectFromClient.readUTF();
 						
 						// check if the user exist. In that case, check the given password with the password in users list
-						if(userMgr.getByLogin(login) != null) 
+						if((userMgr.getByLogin(login)) != null) 
 						{
 							
 							if(userMgr.login(login, pwd)) {
 								
-								
-								outputObjectToClient.writeByte(53); // user saved command
+								// connexion OK => envoyer l'objet 
+								outputObjectToClient.writeByte(53); // user successfully loggedin command
 								outputObjectToClient.writeUTF("You successfully logged in");
 								outputObjectToClient.flush();
+								outputObjectToClient.reset();
+								
+								// send users list to the client
+								HashMap<String, User> users = userMgr.getUsers();
+				
+								try {	
+									outputObjectToClient.writeByte(70); // send registered users list
+									System.out.println("envoi de " + users.size());
+									outputObjectToClient.writeObject(users);
+									outputObjectToClient.flush();
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+								
+								// user successfully logged command
+								outputObjectToClient.writeByte(55);
+								
+								user.setLogin(login);
+								user.setPwd(pwd);
+								user.setConnected(true);
+								
+								outputObjectToClient.writeObject(user);
+								outputObjectToClient.flush();
+								
+							
 							}
 							else
 							{
@@ -194,33 +208,13 @@ public class Client implements ServerObservable  {
 					    done = true;
 					}
 				}
-	
-				inputObjectFromClient.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
+			} 
+			catch (IOException e) {} 
+			catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
-			
-			try {
-				// read input stream from client
-				while((line = inputFromClient.readLine().trim()) != null) 
-				{	
-					// si le message commence par ":user"
-					if(line.trim().startsWith(":user")) {
-						setNickname(line.substring(5));
-					}
-					else if(getNickname() != null)
-					{
-						notifyMessage(getNickname()+" : " +line);
-					}
-				}
-			} 
-			catch (IOException e)  {}
 			finally
-			{			
+			{		
 				// notify observers that the client disconnected
 				notifyDisconnection();
 				
@@ -251,15 +245,6 @@ public class Client implements ServerObservable  {
 	}
 
 	@Override
-	public void notifyDisconnection() 
-	{
-		for(ServerObserver obs : serverObservers) 
-		{
-			obs.notifyDisconnection(this);
-		}
-	}
-
-	@Override
 	public void notifyMessage(String m) 
 	{
 		for(ServerObserver obs : serverObservers) 
@@ -269,11 +254,21 @@ public class Client implements ServerObservable  {
 	}
 
 	@Override
-	public void notifyRegistration() {
+	public void broadcastRegistration() {
 		for(ServerObserver obs : serverObservers) 
 		{
-			//obs.notifyMessage(m);
+			obs.broadcastRegistration(this);
 		}
 		
 	}
+
+	@Override
+	public void notifyDisconnection() 
+	{
+		for(ServerObserver obs : serverObservers) 
+		{
+			obs.notifyDisconnection(this);
+		}
+	}
+
 }

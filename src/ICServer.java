@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -22,7 +23,6 @@ public class ICServer
 	
 	private HashMap<String, Client> clients = new HashMap<String, Client>();
 	
-	
 	private UserManager userMgr = new UserManager();
 	
 	public static final int SERVER_PORT = 1096;
@@ -35,7 +35,7 @@ public class ICServer
         	logger = loggerMgr.getLogger(logLevel);
         	
 			//InetAddress localAddress = InetAddress.getLocalHost();
-        	InetAddress localAddress = InetAddress.getByName("127.0.0.1");
+        	InetAddress localAddress = InetAddress.getByName("192.168.0.12");
 			
 			serverSocket = new ServerSocket(SERVER_PORT, 10, localAddress);
 			logger.info("Server started");
@@ -61,7 +61,8 @@ public class ICServer
 	 */
 	public void broadcast(String message) {
 		
-		for (String key : clients.keySet()) {
+		for (String key : clients.keySet()) 
+		{
 			clients.get(key).sendMessage(message);
 		}
 	}
@@ -88,10 +89,8 @@ public class ICServer
 					
 					// add a new observer to the client observers list
 					c.addObserver(new SrvObserver());
-					
 					clients.put(c.getId().toString(), c);
 					
-					//clients.add(c);
 					logger.info("A new client logged in");
 				} 
 				catch (IOException e)
@@ -113,11 +112,10 @@ public class ICServer
 		public void notifyDisconnection(Client c) 
 		{
 			// remove the client from the clients list		
-			clients.remove(c);
-			
+			clients.remove(c.getId().toString());
 			
 			// log the client disconnection
-			logger.info("The client " + c.getNickname() + " has disconnected from the server");
+			logger.info("The client " + c.getId() + " has disconnected from the server");
 		}
 
 		@Override
@@ -127,9 +125,32 @@ public class ICServer
 		}
 
 		@Override
-		public void notifyRegistration(String m) {
-			// TODO Auto-generated method stub
+		public void broadcastRegistration(Client c) {
+			
+		    
+			HashMap<String, User> users = userMgr.getUsers();
+
+			for (String key : clients.keySet()) {
+				
+				
+				ObjectOutputStream output = clients.get(key).getOutputObjectToClient(); // update users list command
+				
+				try {
+					output.writeByte(53); // user successfully logged command
+					output.writeUTF("A new user just register !");
+					output.flush();
+					output.reset();
+					
+					//output.writeByte(54); // send registered users list
+					//output.writeObject(users);
+					//output.flush();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				
+			}
 			
 		}
+
 	}
 }
