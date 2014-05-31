@@ -17,7 +17,7 @@ public class LoggerManager {
 	
 	//get the current date
 	private Calendar currentDate = Calendar.getInstance();
-	private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-H-mm");
+	private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 	private String dateNow = formatter.format(currentDate.getTime());
 	
 	private int logLevel;

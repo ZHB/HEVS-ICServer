@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -22,6 +23,7 @@ public class ICServer
 	//private ArrayList<Client> clients = new ArrayList<Client>();
 	
 	private HashMap<String, Client> clients = new HashMap<String, Client>();
+	private HashMap<String, User> connectedUsers = new HashMap<String, User>();
 	
 	private UserManager userMgr = new UserManager();
 	
@@ -91,6 +93,7 @@ public class ICServer
 					c.addObserver(new SrvObserver());
 					clients.put(c.getId().toString(), c);
 					
+					
 					logger.info("A new client logged in");
 				} 
 				catch (IOException e)
@@ -125,31 +128,32 @@ public class ICServer
 		}
 
 		@Override
-		public void broadcastRegistration(Client c) {
+		public void broadcastRegistration(Client c) 
+		{
 			
-		    
 			HashMap<String, User> users = userMgr.getUsers();
 
-			for (String key : clients.keySet()) {
-				
-				
-				ObjectOutputStream output = clients.get(key).getOutputObjectToClient(); // update users list command
-				
-				try {
-					output.writeByte(53); // user successfully logged command
-					output.writeUTF("A new user just register !");
-					output.flush();
-					output.reset();
-					
-					//output.writeByte(54); // send registered users list
-					//output.writeObject(users);
-					//output.flush();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				
+			for (String key : clients.keySet()) 
+			{
+				// update registered users list for all connected clients
+				clients.get(key).sendRegisteredUsers();
 			}
+		}
+
+		@Override
+		public void broadcastToSelectedUsers(List l, Message message) 
+		{
+			// save conversation to 
 			
+			
+			// Send messages only to connected clients !
+			for (String key : clients.keySet()) 
+			{
+				if(l.contains(clients.get(key).getUser().getLogin())) 
+				{
+					clients.get(key).sendMessage(message);
+				}
+			}
 		}
 
 	}

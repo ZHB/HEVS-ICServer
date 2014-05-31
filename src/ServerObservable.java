@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.List;
+
 
 public interface ServerObservable {
 	
@@ -13,5 +16,7 @@ public interface ServerObservable {
 	public void broadcastRegistration();
 	
 	public void notifyMessage(String m);
+	
+	public void broadcastToSelectedUsers(List l, Message messages);
 	
 }

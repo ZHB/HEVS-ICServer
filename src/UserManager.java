@@ -102,6 +102,27 @@ public class UserManager implements Serializable
 	    }
 	}
 	
+	public void delete(User user)
+	{
+		// remove the user from the map
+		users.remove(user.getLogin());
+		
+	    try{
+	    	File fileOne=new File(userFilePath);
+	    	FileOutputStream fos=new FileOutputStream(fileOne);
+	        ObjectOutputStream oos=new ObjectOutputStream(fos);
+	        
+	        oos.writeObject(users);
+	        oos.flush();
+	        oos.close();
+	        fos.close();
+	    }
+	    catch(Exception e)
+	    {
+	    	e.printStackTrace();
+	    }
+	}
+	
 	public boolean login(String name, String pwd) throws IOException, ClassNotFoundException {
 		
 		// Check if file exists

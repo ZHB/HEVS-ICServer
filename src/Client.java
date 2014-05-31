@@ -6,8 +6,11 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.rmi.server.UID;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 
 public class Client implements ServerObservable  {
@@ -18,7 +21,10 @@ public class Client implements ServerObservable  {
 	private UID id;
 	private ArrayList<ServerObserver> serverObservers = new ArrayList<ServerObserver>();
 	private UserManager userMgr;
-	private User user = new User();
+	private User user;
+
+	private List selectedUsers = new LinkedList();
+	
 
 	/**
      * Client Constructor
@@ -55,6 +61,11 @@ public class Client implements ServerObservable  {
 	public void setId(UID id) {
 		this.id = id;
 	}
+	
+	public User getUser() {
+		return user;
+	}
+	
 
 	/**
 	 * Send a message to the output stream
@@ -62,8 +73,53 @@ public class Client implements ServerObservable  {
 	 * @param message is a message String
 	 */
 	public void sendMessage(String message) {
-		//outputToClient.println(message);
-		//outputToClient.flush();
+		try {
+			outputObjectToClient.writeByte(21);
+			outputObjectToClient.writeUTF(message);
+			outputObjectToClient.flush();
+			outputObjectToClient.reset();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendMessage(Message message) {
+		try {
+			outputObjectToClient.writeByte(21);
+			outputObjectToClient.writeUTF(message.getFormatedDate() + " :" + message.getMessage());
+			outputObjectToClient.flush();
+			outputObjectToClient.reset();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Send a message to the output stream
+	 * 
+	 * @param message is a message String
+	 */
+	public void sendUser(User u) {
+		try {
+			outputObjectToClient.writeByte(100);
+			outputObjectToClient.writeObject(u);
+			outputObjectToClient.flush();
+			outputObjectToClient.reset();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendRegisteredUsers() {
+		HashMap<String, User> users = userMgr.getUsers();
+
+		try {	
+			outputObjectToClient.writeByte(101); // send registered users list
+			outputObjectToClient.writeObject(users);
+			outputObjectToClient.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -73,7 +129,6 @@ public class Client implements ServerObservable  {
 	 * @return void
 	 */
 	public void closeConnections() {
-		
 		try 
 		{
 			outputObjectToClient.close();
@@ -97,9 +152,6 @@ public class Client implements ServerObservable  {
 		@Override
 		public void run() {
 			try {
-				System.out.println("Waiting client message");
-				boolean done = false;
-				
 				byte messageType;
 				
 				while(true) 
@@ -112,100 +164,106 @@ public class Client implements ServerObservable  {
 					switch(messageType)
 					{
 					case 1: // register
-						login = inputObjectFromClient.readUTF();
-						pwd = inputObjectFromClient.readUTF();
+						// get the User from the client
+						user = (User) inputObjectFromClient.readObject();
 						
-						// lire le fichier des utilisateurs enregistrés.
-						if(userMgr.getByLogin(login) == null) 
+						// check if the User is already registred
+						if(userMgr.getByLogin(user.getLogin()) == null) 
 						{
 							// create a user and save it to the users file
-							user.setLogin(login);
-							user.setPwd(pwd);
-							user.setConnected(false);
 							userMgr.save(user);
 							
-							outputObjectToClient.writeByte(50); // user saved command7
-							outputObjectToClient.writeUTF("You have been successfully registered to the chat");
-							outputObjectToClient.flush();
-							outputObjectToClient.reset();
-							
-							// Send the created user to the client
-							outputObjectToClient.writeByte(60);
-							outputObjectToClient.writeObject(user);
-							outputObjectToClient.flush();
-							
+							// send a notification message to the client
+							sendMessage("You have been successfully registered to the chat");
 							
 							// sent users list to ALL clients
 							broadcastRegistration();
 						} 
 						else 
 						{
-							outputObjectToClient.writeByte(51); // user already registred command
-							outputObjectToClient.writeUTF("The user " + login + " is already registred. Please choose an other username");
-							outputObjectToClient.flush();
+							sendMessage("The user " + user.getLogin() + " is already registred. Please choose an other username");
 						}
 						
 					    break;
-					case 2: // Login
-						login = inputObjectFromClient.readUTF();
-						pwd = inputObjectFromClient.readUTF();
+					case 2: // Unregister
+						// get the User from the client
+						user = (User) inputObjectFromClient.readObject();
 						
-						// check if the user exist. In that case, check the given password with the password in users list
-						if((userMgr.getByLogin(login)) != null) 
+						userMgr.delete(user);
+						
+						// send a notification message to the client
+						sendMessage("You have been successfully unregistered from the chat");
+						
+						// sent users list to ALL clients
+						broadcastRegistration();
+						
+						
+						
+					    break;
+					case 11: // Login
+						
+						// get the User from the client
+						user = (User) inputObjectFromClient.readObject();
+						
+
+						if(userMgr.getByLogin(user.getLogin()) != null && userMgr.login(user.getLogin(), user.getPwd())) {
+							
+							// update user status and send it to client
+							user.setConnected(true);
+							sendUser(user);	
+							
+							// send a notification message to client
+							sendMessage("You successfully logged in as " + user.getLogin());
+							
+							// send all registered users to client
+							sendRegisteredUsers();
+							
+							// send action code
+							outputObjectToClient.writeByte(11); // send registered users list
+							outputObjectToClient.flush();
+						}
+						else
 						{
-							
-							if(userMgr.login(login, pwd)) {
-								
-								// connexion OK => envoyer l'objet 
-								outputObjectToClient.writeByte(53); // user successfully loggedin command
-								outputObjectToClient.writeUTF("You successfully logged in");
-								outputObjectToClient.flush();
-								outputObjectToClient.reset();
-								
-								// send users list to the client
-								HashMap<String, User> users = userMgr.getUsers();
-				
-								try {	
-									outputObjectToClient.writeByte(70); // send registered users list
-									System.out.println("envoi de " + users.size());
-									outputObjectToClient.writeObject(users);
-									outputObjectToClient.flush();
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-								
-								// user successfully logged command
-								outputObjectToClient.writeByte(55);
-								
-								user.setLogin(login);
-								user.setPwd(pwd);
-								user.setConnected(true);
-								
-								outputObjectToClient.writeObject(user);
-								outputObjectToClient.flush();
-								
-							
-							}
-							else
-							{
-								outputObjectToClient.writeByte(52); // user saved command
-								outputObjectToClient.writeUTF("The user " + login + " doesn't exist or the password is incorrect");
-								outputObjectToClient.flush();
-							}
+							sendMessage("The user " + user.getLogin() + " doesn't exist or the password is incorrect");
+						}
+						
+					    break;
+					case 12: // Logout
+						
+						user.setConnected(false);
+						user.setLogin("");
+						user.setPwd("");
+						sendUser(user);	
+						
+						// send a notification message to client
+						sendMessage("You have been successfully disconnected from the chat");
+						
+						outputObjectToClient.writeByte(12); // send registered users list
+						outputObjectToClient.flush();
+						
+					    break;
+					case 21: // Chat message
+						Message message = (Message) inputObjectFromClient.readObject();
+	
+						// create a new conversation for the user
+						//user.createConversation("conv1");
+						
+						// add a message to a conversation
+						//user.setConversation("conv1",  new Message(s));
+
+						if(selectedUsers.size() < 1) {
+							sendMessage("Please, select at least a user to chat with !");
 						} 
 						else 
 						{
-							outputObjectToClient.writeByte(52); // user already registred command
-							outputObjectToClient.writeUTF("The user " + login + " doesn't exist or the password is incorrect");
-							outputObjectToClient.flush();
+							broadcastToSelectedUsers(selectedUsers, message);
 						}
-						
 					    break;
-					case 3: // Send message
-					    System.out.println("Message C [1]: " + inputObjectFromClient.readUTF());
+					case 111: // Send message code
+						selectedUsers = (List<String>) inputObjectFromClient.readObject();
 					    break;
 					default:
-					    done = true;
+					    //done = true;
 					}
 				}
 			} 
@@ -268,6 +326,14 @@ public class Client implements ServerObservable  {
 		for(ServerObserver obs : serverObservers) 
 		{
 			obs.notifyDisconnection(this);
+		}
+	}
+
+	@Override
+	public void broadcastToSelectedUsers(List l, Message message) {
+		for(ServerObserver obs : serverObservers) 
+		{
+			obs.broadcastToSelectedUsers(l, message);
 		}
 	}
 
