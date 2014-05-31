@@ -20,11 +20,8 @@ public class ICServer
 	private LoggerManager loggerMgr = new LoggerManager();
 	private Logger logger;
 	
-	//private ArrayList<Client> clients = new ArrayList<Client>();
-	
 	private HashMap<String, Client> clients = new HashMap<String, Client>();
-	private HashMap<String, User> connectedUsers = new HashMap<String, User>();
-	
+
 	private UserManager userMgr = new UserManager();
 	
 	public static final int SERVER_PORT = 1096;
@@ -93,7 +90,6 @@ public class ICServer
 					c.addObserver(new SrvObserver());
 					clients.put(c.getId().toString(), c);
 					
-					
 					logger.info("A new client logged in");
 				} 
 				catch (IOException e)
@@ -143,8 +139,7 @@ public class ICServer
 		@Override
 		public void broadcastToSelectedUsers(List l, Message message) 
 		{
-			// save conversation to 
-			
+			// save conversation to a file on the server only for oneToOne conversations
 			
 			// Send messages only to connected clients !
 			for (String key : clients.keySet()) 

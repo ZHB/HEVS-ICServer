@@ -43,7 +43,6 @@ public class Client implements ServerObservable  {
 			this.outputObjectToClient = new ObjectOutputStream(clientSocket.getOutputStream());
             this.inputObjectFromClient = new ObjectInputStream(clientSocket.getInputStream());
 
-			
 			// start a communication thread for each client.
 			Thread listenerThread = new Thread(new ClientListener());
 			listenerThread.start();
@@ -336,5 +335,4 @@ public class Client implements ServerObservable  {
 			obs.broadcastToSelectedUsers(l, message);
 		}
 	}
-
 }

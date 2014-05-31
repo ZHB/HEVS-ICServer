@@ -20,7 +20,7 @@ public class UserManager implements Serializable
 	private HashMap<String, User> users = new HashMap<String, User>();
 	
 	public UserManager() {
-		this.users = load();
+		//this.users = load();
 	}
 	
 	public HashMap<String, User> getUsers() {
