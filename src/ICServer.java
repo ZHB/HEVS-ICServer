@@ -28,13 +28,15 @@ public class ICServer
 
 	public ICServer(int logLevel) 
 	{
+		
 				
-        try {
+        try
+        {
         	// initiate a new logger with the given level
         	logger = loggerMgr.getLogger(logLevel);
         	
 			//InetAddress localAddress = InetAddress.getLocalHost();
-        	InetAddress localAddress = InetAddress.getByName("192.168.0.12");
+        	InetAddress localAddress = InetAddress.getByName("127.0.0.1");
 			
 			serverSocket = new ServerSocket(SERVER_PORT, 10, localAddress);
 			logger.info("Server started");
@@ -58,7 +60,8 @@ public class ICServer
 	 * 
 	 * @param message
 	 */
-	public void broadcast(String message) {
+	public void broadcast(String message)
+	{
 		
 		for (String key : clients.keySet()) 
 		{
@@ -106,7 +109,8 @@ public class ICServer
 	 * @author Vince
 	 *
 	 */
-	public class SrvObserver implements ServerObserver {
+	public class SrvObserver implements ServerObserver
+	{
 		@Override
 		public void notifyDisconnection(Client c) 
 		{
@@ -149,6 +153,13 @@ public class ICServer
 					clients.get(key).sendMessage(message);
 				//}
 			}
+		}
+		
+		
+		@Override
+		public void sendMsgToUser(User u, Message msg)
+		{
+			clients.get(u.getLogin()).sendMessage(msg);
 		}
 
 	}

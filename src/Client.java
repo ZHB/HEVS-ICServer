@@ -330,4 +330,11 @@ public class Client implements ServerObservable  {
 			obs.broadcastToSelectedUsers(l, message);
 		}
 	}
+
+	@Override
+	public void sendMsgToUser(User u, Message msg)
+	{
+		
+		
+	}
 }

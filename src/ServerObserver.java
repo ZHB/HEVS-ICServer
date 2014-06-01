@@ -11,5 +11,7 @@ public interface ServerObserver {
 	public void broadcastRegistration(Client c);
 	
 	public void broadcastToSelectedUsers(List l, Message messages);
+
+	public void sendMsgToUser(User u, Message msg);
 	
 }

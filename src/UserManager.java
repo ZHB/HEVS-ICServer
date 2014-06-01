@@ -34,7 +34,8 @@ public class UserManager implements Serializable
 	// load the user HashMap
 	public HashMap<String, User> load() {
 		
-		try{
+		try
+		{
 	        File toRead = new File(userFilePath);
 	        FileInputStream fis=new FileInputStream(toRead);
 	        ObjectInputStream ois=new ObjectInputStream(fis);
@@ -45,10 +46,15 @@ public class UserManager implements Serializable
 	        fis.close();
 	        
 	        //print All data in MAP
-	        for(Map.Entry<String, User> u :users.entrySet()){
+	        for(Map.Entry<String, User> u :users.entrySet())
+	        {
 	            System.out.println(u.getKey()+" : "+u.getValue());
 	        }
-	    }catch(Exception e){}
+	    }
+		catch(Exception e)
+		{
+			
+		}
 		
 		return users;
 	}

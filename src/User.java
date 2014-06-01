@@ -13,7 +13,6 @@ public class User implements Serializable
 	private String login;
 	private String pwd;
 	private boolean isConnected = false;
-	private ArrayList<Discussion> discussions;
 	private HashMap<String, ArrayList<Message>> conversations = new HashMap<String, ArrayList<Message>>();
 	
 	
@@ -59,11 +58,6 @@ public class User implements Serializable
 
 	public void setLogin(String login) {
 		this.login = login;
-	}
-
-	public void addDiscussion(Discussion disc)
-	{
-		discussions.add(disc);
 	}
 	
 	public String getLogin()
