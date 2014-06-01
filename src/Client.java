@@ -146,8 +146,6 @@ public class Client implements ServerObservable  {
 	 *
 	 */
 	public class ClientListener implements Runnable {
-		private String line;
-		
 		@Override
 		public void run() {
 			try {
@@ -155,11 +153,8 @@ public class Client implements ServerObservable  {
 				
 				while(true) 
 				{
-
 					messageType = inputObjectFromClient.readByte();
-					String login;
-					String pwd;
-					
+
 					switch(messageType)
 					{
 					case 1: // register
@@ -258,7 +253,7 @@ public class Client implements ServerObservable  {
 							broadcastToSelectedUsers(selectedUsers, message);
 						}
 					    break;
-					case 111: // Send message code
+					case 111: // User selection to chat width
 						selectedUsers = (List<String>) inputObjectFromClient.readObject();
 					    break;
 					default:

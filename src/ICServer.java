@@ -144,10 +144,10 @@ public class ICServer
 			// Send messages only to connected clients !
 			for (String key : clients.keySet()) 
 			{
-				if(l.contains(clients.get(key).getUser().getLogin())) 
-				{
+				//if(l.contains(clients.get(key).getUser().getLogin())) 
+				//{
 					clients.get(key).sendMessage(message);
-				}
+				//}
 			}
 		}
 
