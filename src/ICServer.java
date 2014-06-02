@@ -104,7 +104,7 @@ public class ICServer
 	}
 	
 	/**
-	 * Internal class that observe client actions.
+	 * Internal class that observe client actions. 
 	 * 
 	 * @author Vince
 	 *

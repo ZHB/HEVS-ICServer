@@ -30,7 +30,8 @@ public class LoggerManager {
 		setLogLevel();
 		
 		// define a new file handler and its log
-		fh = new FileHandler(".\\logs\\" + dateNow + ".log", true);       
+		fh = new FileHandler(".\\logs\\" + dateNow + ".log", true);     
+		
 		//fh = new FileHandler("output.log", 1048576, 1, true);
 		myLogger.addHandler(fh);
 		//setLogLevel();
