@@ -140,6 +140,7 @@ public class ICServer
 			}
 		}
 
+		/*
 		@Override
 		public void broadcastToSelectedUsers(List l, Message message) 
 		{
@@ -154,12 +155,28 @@ public class ICServer
 				//}
 			}
 		}
-		
+		*/
 		
 		@Override
 		public void sendMsgToUser(User u, Message msg)
 		{
-			clients.get(u.getLogin()).sendMessage(msg);
+			
+			// register conversation to a file
+			
+			
+			// Check is destination client is available (connected)
+			for (Map.Entry<String, Client> e : clients.entrySet())
+			{
+				Client c = e.getValue();
+				if (c.getUser().getLogin().equals(u.getLogin()))
+				{
+					//System.out.println("Envoi a : " + c.getUser().getLogin());
+					
+					c.sendMessage(msg);
+				}
+			}
+			
+			
 		}
 
 	}

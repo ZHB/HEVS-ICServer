@@ -2,7 +2,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public interface ServerObservable {
+public interface ServerObservable
+{
 	
 	public void addObserver(ServerObserver obs);
 	
@@ -17,7 +18,7 @@ public interface ServerObservable {
 	
 	public void notifyMessage(String m);
 	
-	public void broadcastToSelectedUsers(List l, Message messages);
+	//public void broadcastToSelectedUsers(List l, Message messages);
 	
 	public void sendMsgToUser(User u, Message msg);
 	

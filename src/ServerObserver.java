@@ -2,7 +2,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public interface ServerObserver {
+public interface ServerObserver
+{
 	
 	public void notifyDisconnection(Client c);
 	
@@ -10,7 +11,7 @@ public interface ServerObserver {
 	
 	public void broadcastRegistration(Client c);
 	
-	public void broadcastToSelectedUsers(List l, Message messages);
+	//public void broadcastToSelectedUsers(List l, Message messages);
 
 	public void sendMsgToUser(User u, Message msg);
 	

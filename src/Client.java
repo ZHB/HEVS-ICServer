@@ -23,7 +23,7 @@ public class Client implements ServerObservable  {
 	private UserManager userMgr;
 	private User user;
 
-	private List selectedUsers = new LinkedList();
+	private User selectedUser;
 	
 
 	/**
@@ -71,24 +71,32 @@ public class Client implements ServerObservable  {
 	 * 
 	 * @param message is a message String
 	 */
-	public void sendMessage(String message) {
-		try {
+	public void sendMessage(String message)
+	{
+		try
+		{
 			outputObjectToClient.writeByte(21);
 			outputObjectToClient.writeUTF(message);
 			outputObjectToClient.flush();
 			outputObjectToClient.reset();
-		} catch (IOException e) {
+		}
+		catch (IOException e)
+		{
 			e.printStackTrace();
 		}
 	}
 	
-	public void sendMessage(Message message) {
-		try {
+	public void sendMessage(Message message)
+	{
+		try
+		{
 			outputObjectToClient.writeByte(21);
-			outputObjectToClient.writeUTF(message.getFormatedDate() + " :" + message.getMessage());
+			outputObjectToClient.writeUTF(user.getLogin() + " [" + message.getFormatedDate() + "] : " + message.getMessage());
 			outputObjectToClient.flush();
 			outputObjectToClient.reset();
-		} catch (IOException e) {
+		}
+		catch (IOException e)
+		{
 			e.printStackTrace();
 		}
 	}
@@ -145,10 +153,13 @@ public class Client implements ServerObservable  {
 	 * @author Vince
 	 *
 	 */
-	public class ClientListener implements Runnable {
+	public class ClientListener implements Runnable
+	{
 		@Override
-		public void run() {
-			try {
+		public void run()
+		{
+			try
+			{
 				byte messageType;
 				
 				while(true) 
@@ -236,35 +247,60 @@ public class Client implements ServerObservable  {
 						outputObjectToClient.flush();
 						
 					    break;
-					case 21: // Chat message
+					case 21: // Reception message
 						Message message = (Message) inputObjectFromClient.readObject();
 	
-						// create a new conversation for the user
-						//user.createConversation("conv1");
+						
+						String conversationKey = selectedUser.getLogin();
+
+						
+						if(user.getConversation(conversationKey) == null) 
+						{
+							// create a new conversation for the user
+							user.createConversation(conversationKey);
+						}
 						
 						// add a message to a conversation
-						//user.setConversation("conv1",  new Message(s));
+						user.setConversation(conversationKey, message);
+						
+						System.out.println(user.getConversation(conversationKey).size());
 
-						if(selectedUsers.size() < 1) {
+						if(selectedUser == null) {
 							sendMessage("Please, select at least a user to chat with !");
 						} 
 						else 
 						{
-							broadcastToSelectedUsers(selectedUsers, message);
+							sendMsgToUser(selectedUser, message);
+							//broadcastToSelectedUsers(selectedUser, message);
 						}
 					    break;
-					case 111: // User selection to chat width
-						selectedUsers = (List<String>) inputObjectFromClient.readObject();
+					    
+					case 111: // User selection to chat with
+						selectedUser = (User) inputObjectFromClient.readObject();
+						
+						if(user.getConversation(selectedUser.getLogin()) != null) {
+							System.out.println("renvoi de " + user.getConversation(selectedUser.getLogin()).toArray());
+							
+							for(Message m : user.getConversation(selectedUser.getLogin())) 
+							{
+								System.out.println(m.getFormatedDate() + " " + m.getMessage());
+							}
+						}
+						
+						
 					    break;
-					default:
-					    //done = true;
 					}
 				}
 			} 
-			catch (IOException e) {} 
-			catch (ClassNotFoundException e) {
+			catch (IOException e)
+			{
+				
+			} 
+			catch (ClassNotFoundException e)
+			{
 				e.printStackTrace();
 			}
+			
 			finally
 			{		
 				// notify observers that the client disconnected
@@ -276,11 +312,13 @@ public class Client implements ServerObservable  {
 		}
 	}
 
-	public ObjectOutputStream getOutputObjectToClient() {
+	public ObjectOutputStream getOutputObjectToClient()
+	{
 		return outputObjectToClient;
 	}
 
-	public void setOutputObjectToClient(ObjectOutputStream outputObjectToClient) {
+	public void setOutputObjectToClient(ObjectOutputStream outputObjectToClient)
+	{
 		this.outputObjectToClient = outputObjectToClient;
 	}
 
@@ -322,7 +360,7 @@ public class Client implements ServerObservable  {
 			obs.notifyDisconnection(this);
 		}
 	}
-
+/*
 	@Override
 	public void broadcastToSelectedUsers(List l, Message message) {
 		for(ServerObserver obs : serverObservers) 
@@ -330,11 +368,16 @@ public class Client implements ServerObservable  {
 			obs.broadcastToSelectedUsers(l, message);
 		}
 	}
-
+*/
 	@Override
 	public void sendMsgToUser(User u, Message msg)
 	{
 		
+		
+		for(ServerObserver obs : serverObservers) 
+		{
+			obs.sendMsgToUser(u, msg);
+		}
 		
 	}
 }
