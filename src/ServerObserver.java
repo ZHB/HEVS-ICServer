@@ -9,7 +9,7 @@ public interface ServerObserver
 	
 	public void notifyMessage(String m);
 	
-	public void broadcastRegistration(Client c);
+	public void updateRegisteredUsersList(Client c);
 	
 	//public void broadcastToSelectedUsers(List l, Message messages);
 

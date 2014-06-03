@@ -209,7 +209,7 @@ public class Client implements ServerObservable  {
 							sendMessage("You have been successfully registered to the chat");
 							
 							// sent users list to ALL clients
-							broadcastRegistration();
+							updateRegisteredUsersList();
 						} 
 						else 
 						{
@@ -232,7 +232,7 @@ public class Client implements ServerObservable  {
 						sendMessage("You have been successfully unregistered from the chat");
 						
 						// sent users list to ALL clients
-						broadcastRegistration();
+						updateRegisteredUsersList();
 						
 						
 						
@@ -258,7 +258,7 @@ public class Client implements ServerObservable  {
 							System.out.println("Login :" + user.toString());
 							
 							// sent users list to ALL clients
-							broadcastRegistration();
+							updateRegisteredUsersList();
 							
 							// send a notification message to client
 							sendMessage("You successfully logged in as " + user.getLogin());
@@ -285,7 +285,7 @@ public class Client implements ServerObservable  {
 						sendUser(user);	
 						
 						// sent users list to ALL clients
-						broadcastRegistration();
+						updateRegisteredUsersList();
 						
 						// send a notification message to client
 						sendMessage("You have been successfully disconnected from the chat");
@@ -396,10 +396,10 @@ public class Client implements ServerObservable  {
 	}
 
 	@Override
-	public void broadcastRegistration() {
+	public void updateRegisteredUsersList() {
 		for(ServerObserver obs : serverObservers) 
 		{
-			obs.broadcastRegistration(this);
+			obs.updateRegisteredUsersList(this);
 		}
 		
 	}

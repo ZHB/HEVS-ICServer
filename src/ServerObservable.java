@@ -14,7 +14,7 @@ public interface ServerObservable
 	 */
 	public void notifyDisconnection();
 	
-	public void broadcastRegistration();
+	public void updateRegisteredUsersList();
 	
 	public void notifyMessage(String m);
 	

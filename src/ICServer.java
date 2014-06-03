@@ -126,7 +126,7 @@ public class ICServer
 		}
 
 		@Override
-		public void broadcastRegistration(Client c) 
+		public void updateRegisteredUsersList(Client c) 
 		{
 			
 			//HashMap<String, User> users = userMgr.getUsers();
