@@ -20,23 +20,32 @@ public class ICServer
 	private LoggerManager loggerMgr = new LoggerManager();
 	private Logger logger;
 	
+	private String servIp = "127.0.0.1";
+	private int servPort = 1096;
+	
+	private Client c;
+	private UserManager userMgr;
 	private HashMap<String, Client> clients = new HashMap<String, Client>();
 
-	private UserManager userMgr = new UserManager();
-	
-	public static final int SERVER_PORT = 1096;
-
 	public ICServer(int logLevel) 
-	{		
-        try
+	{
+        init(logLevel); // Parameter to the init method for log level
+	}
+	
+	public void init(int logLevel)
+	{
+		userMgr = new UserManager();
+		userMgr.load();
+		
+		try
         {
         	// initiate a new logger with the given level
         	logger = loggerMgr.getLogger(logLevel);
         	
 			//InetAddress localAddress = InetAddress.getLocalHost();
-        	InetAddress localAddress = InetAddress.getByName("127.0.0.1");
+        	InetAddress localAddress = InetAddress.getByName(servIp);
 			
-			serverSocket = new ServerSocket(SERVER_PORT, 10, localAddress);
+			serverSocket = new ServerSocket(servPort, 10, localAddress);
 			logger.info("Server started");
 			
 			// start a new thread to accept client without blocking the server
@@ -85,7 +94,7 @@ public class ICServer
 				{
 					// accept a new client and create a socket
 					clientSocket = serverSocket.accept();
-					Client c  = new Client(clientSocket, userMgr);
+					c  = new Client(clientSocket, userMgr);
 					
 					// add a new observer to the client observers list
 					c.addObserver(new SrvObserver());
@@ -110,10 +119,10 @@ public class ICServer
 	public class SrvObserver implements ServerObserver
 	{
 		@Override
-		public void notifyDisconnection(Client c) 
+		public void notifyDisconnection() 
 		{
 			// remove the client from the clients list		
-			clients.remove(c.getId().toString());
+			clients.remove(c.getId());
 			
 			// log the client disconnection
 			logger.info("The client " + c.getId() + " has disconnected from the server");
@@ -137,23 +146,6 @@ public class ICServer
 				clients.get(key).sendRegisteredUsers();
 			}
 		}
-
-		/*
-		@Override
-		public void broadcastToSelectedUsers(List l, Message message) 
-		{
-			// save conversation to a file on the server only for oneToOne conversations
-			
-			// Send messages only to connected clients !
-			for (String key : clients.keySet()) 
-			{
-				//if(l.contains(clients.get(key).getUser().getLogin())) 
-				//{
-					clients.get(key).sendMessage(message);
-				//}
-			}
-		}
-		*/
 		
 		@Override
 		public void sendMsgToUser(User selectedUser, User userFrom, Message msg)
@@ -165,20 +157,6 @@ public class ICServer
 			{
 				clients.get(selectedUser.getId()).sendMessage(userFrom, msg);
 			}
-			
-			// Check is destination client is available (connected)
-			/*for (Map.Entry<String, Client> e : clients.entrySet())
-			{
-				Client c = e.getValue();
-				if (c.getUser().getLogin().equals(u.getLogin()))
-				{
-					//System.out.println("Envoi a : " + c.getUser().getLogin());
-					
-					//c.sendMessage(msg);
-				}
-			}
-			*/
-			
 		}
 
 	}

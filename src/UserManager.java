@@ -19,33 +19,43 @@ public class UserManager implements Serializable
 	private static final String userFilePath = "./data/users.txt";
 	private HashMap<String, User> users = new HashMap<String, User>();
 	
-	public UserManager() {
-		this.users = load();
+	public UserManager()
+	{
+		
 	}
 	
-	public HashMap<String, User> getUsers() {
+	public HashMap<String, User> getUsers()
+	{
 		return users;
 	}
 
-	public void setUsers(HashMap<String, User> users) {
+	/*
+	public void setUsers(HashMap<String, User> users)
+	{
 		this.users = users;
 	}
+	*/
 	
-	public void setUser(User u) 
+	public void updateUser(User u) 
 	{
+		System.out.println("Update status: " + u.toString());
 		users.put(u.getLogin(), u);
 	}
 
-	// load the user HashMap
-	public HashMap<String, User> load() {
-		
+	// Load users data from the file
+	public void load()
+	{
 		try
 		{
 	        File toRead = new File(userFilePath);
-	        FileInputStream fis=new FileInputStream(toRead);
+	        if (!toRead.exists())
+	        {
+	        	save();
+	        }
+	        FileInputStream fis = new FileInputStream(toRead);
 	        ObjectInputStream ois=new ObjectInputStream(fis);
 
-	        HashMap<String, User> users = (HashMap<String, User>)ois.readObject();
+	        users = (HashMap<String, User>) ois.readObject();
 
 	        ois.close();
 	        fis.close();
@@ -55,7 +65,25 @@ public class UserManager implements Serializable
 			
 		}
 		
-		return users;
+		//return users;
+	}
+	
+	// Save users data to the file
+	public void save()
+	{
+        try
+        {
+        	FileOutputStream fos = new FileOutputStream(userFilePath);
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			
+			oos.writeObject(users);
+			oos.flush();
+			oos.close();
+		}
+        catch (IOException e)
+        {
+			e.printStackTrace();
+		}
 	}
 	
 	public User getByLogin(String login) throws IOException, ClassNotFoundException
@@ -86,49 +114,26 @@ public class UserManager implements Serializable
 	 * Save users data on a text file
 	 * @author SB
 	 */
-	public void save(User user)
+	public void register(User user)
 	{
-		// add the user to the map
+		// add the user to the map -> register
 		users.put(user.getLogin(), user);
-		
-	    try{
-	    	File fileOne=new File(userFilePath);
-	    	FileOutputStream fos=new FileOutputStream(fileOne);
-	        ObjectOutputStream oos=new ObjectOutputStream(fos);
-	        
-	        oos.writeObject(users);
-	        oos.flush();
-	        oos.close();
-	        fos.close();
-	    }
-	    catch(Exception e)
-	    {
-	    	e.printStackTrace();
-	    }
+		save();
 	}
 	
-	public void delete(User user)
+	/**
+	 * Unregister
+	 * @param user
+	 */
+	public void unregister(User user)
 	{
-		// remove the user from the map
+		// remove the user from the map -> unregister
 		users.remove(user.getLogin());
-		
-	    try{
-	    	File fileOne=new File(userFilePath);
-	    	FileOutputStream fos=new FileOutputStream(fileOne);
-	        ObjectOutputStream oos=new ObjectOutputStream(fos);
-	        
-	        oos.writeObject(users);
-	        oos.flush();
-	        oos.close();
-	        fos.close();
-	    }
-	    catch(Exception e)
-	    {
-	    	e.printStackTrace();
-	    }
+		save();
 	}
 	
-	public boolean login(String name, String pwd) throws IOException, ClassNotFoundException {
+	public boolean login(String name, String pwd) throws IOException, ClassNotFoundException
+	{
 		
 		// Check if file exists
 		File f = new File(userFilePath);
