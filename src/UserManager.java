@@ -20,7 +20,7 @@ public class UserManager implements Serializable
 	private HashMap<String, User> users = new HashMap<String, User>();
 	
 	public UserManager() {
-		//this.users = load();
+		this.users = load();
 	}
 	
 	public HashMap<String, User> getUsers() {
@@ -29,6 +29,11 @@ public class UserManager implements Serializable
 
 	public void setUsers(HashMap<String, User> users) {
 		this.users = users;
+	}
+	
+	public void setUser(User u) 
+	{
+		users.put(u.getLogin(), u);
 	}
 
 	// load the user HashMap
@@ -44,12 +49,6 @@ public class UserManager implements Serializable
 
 	        ois.close();
 	        fis.close();
-	        
-	        //print All data in MAP
-	        for(Map.Entry<String, User> u :users.entrySet())
-	        {
-	            System.out.println(u.getKey()+" : "+u.getValue());
-	        }
 	    }
 		catch(Exception e)
 		{

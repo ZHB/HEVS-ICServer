@@ -20,6 +20,6 @@ public interface ServerObservable
 	
 	//public void broadcastToSelectedUsers(List l, Message messages);
 	
-	public void sendMsgToUser(User u, Message msg);
+	public void sendMsgToUser(User selectedUser, User userFrom, Message msg);
 	
 }

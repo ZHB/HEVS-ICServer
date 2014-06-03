@@ -76,4 +76,10 @@ public class User implements Serializable
 		return id;
 	}
 	
+	
+	public String toString() {
+		return "Login: " + login + " IsConnected: " + isConnected + " ClientID: " + id;
+		
+	}
+	
 }

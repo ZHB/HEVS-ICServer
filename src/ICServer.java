@@ -27,9 +27,7 @@ public class ICServer
 	public static final int SERVER_PORT = 1096;
 
 	public ICServer(int logLevel) 
-	{
-		
-				
+	{		
         try
         {
         	// initiate a new logger with the given level
@@ -131,7 +129,7 @@ public class ICServer
 		public void broadcastRegistration(Client c) 
 		{
 			
-			HashMap<String, User> users = userMgr.getUsers();
+			//HashMap<String, User> users = userMgr.getUsers();
 
 			for (String key : clients.keySet()) 
 			{
@@ -158,24 +156,28 @@ public class ICServer
 		*/
 		
 		@Override
-		public void sendMsgToUser(User u, Message msg)
+		public void sendMsgToUser(User selectedUser, User userFrom, Message msg)
 		{
 			
 			// register conversation to a file
 			
+			if(selectedUser.getId() != null) 
+			{
+				clients.get(selectedUser.getId()).sendMessage(userFrom, msg);
+			}
 			
 			// Check is destination client is available (connected)
-			for (Map.Entry<String, Client> e : clients.entrySet())
+			/*for (Map.Entry<String, Client> e : clients.entrySet())
 			{
 				Client c = e.getValue();
 				if (c.getUser().getLogin().equals(u.getLogin()))
 				{
 					//System.out.println("Envoi a : " + c.getUser().getLogin());
 					
-					c.sendMessage(msg);
+					//c.sendMessage(msg);
 				}
 			}
-			
+			*/
 			
 		}
 
