@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 
 public class Client implements ServerObservable  {
@@ -18,7 +19,7 @@ public class Client implements ServerObservable  {
 	private Socket clientSocket = null;
 	private ObjectOutputStream outputObjectToClient = null;
     private ObjectInputStream inputObjectFromClient = null;
-	private UID id;
+	private String id;
 	private ArrayList<ServerObserver> serverObservers = new ArrayList<ServerObserver>();
 	private UserManager userMgr;
 	private User user;
@@ -36,7 +37,12 @@ public class Client implements ServerObservable  {
 
 		this.clientSocket = clientSocket;
 		this.userMgr = userMgr;
-		this.id = new UID();
+		
+		Random random = new Random();
+	    String tag = Long.toString(Math.abs(random.nextLong()), 36);
+	    this.id =  tag.substring(0, 8);
+	    
+		//this.id = new UID();
 
 		try 
 		{	
@@ -51,18 +57,32 @@ public class Client implements ServerObservable  {
 		{
 			e.printStackTrace();
 		}
+		
+		// send the generated ID to the user
+		sendClientId();
 	}
 	
-	public UID getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(UID id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 	
 	public User getUser() {
 		return user;
+	}
+	
+	private void sendClientId() {
+		// send the generated Client ID back to the connected client
+		try {
+			outputObjectToClient.writeByte(120);
+			outputObjectToClient.writeUTF(id.toString());
+			outputObjectToClient.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 
@@ -86,12 +106,12 @@ public class Client implements ServerObservable  {
 		}
 	}
 	
-	public void sendMessage(Message message)
+	public void sendMessage(User userFrom, Message message)
 	{
 		try
 		{
 			outputObjectToClient.writeByte(21);
-			outputObjectToClient.writeUTF(user.getLogin() + " [" + message.getFormatedDate() + "] : " + message.getMessage());
+			outputObjectToClient.writeUTF("[" + message.getFormatedDate() + "] " + userFrom.getLogin() + ": " + message.getMessage());
 			outputObjectToClient.flush();
 			outputObjectToClient.reset();
 		}
@@ -107,6 +127,8 @@ public class Client implements ServerObservable  {
 	 * @param message is a message String
 	 */
 	public void sendUser(User u) {
+		
+		System.out.println("Before Broadcast: "+ u.toString());
 		try {
 			outputObjectToClient.writeByte(100);
 			outputObjectToClient.writeObject(u);
@@ -117,7 +139,12 @@ public class Client implements ServerObservable  {
 		}
 	}
 	
+	/**
+	 * Get all registered users from the HashMap and send it to 
+	 * the client via the output stream
+	 */
 	public void sendRegisteredUsers() {
+		
 		HashMap<String, User> users = userMgr.getUsers();
 
 		try {	
@@ -196,6 +223,11 @@ public class Client implements ServerObservable  {
 						
 						userMgr.delete(user);
 						
+						user.setConnected(false);
+						user.setPwd(null);
+						user.setId(null);
+						user.setLogin(null);
+						
 						// send a notification message to the client
 						sendMessage("You have been successfully unregistered from the chat");
 						
@@ -213,9 +245,20 @@ public class Client implements ServerObservable  {
 
 						if(userMgr.getByLogin(user.getLogin()) != null && userMgr.login(user.getLogin(), user.getPwd())) {
 							
+							
 							// update user status and send it to client
 							user.setConnected(true);
+							user.setId(id.toString());
+							userMgr.setUser(user); // update user in users list
+							
+							// update the user to the client
 							sendUser(user);	
+							
+							
+							System.out.println("Login :" + user.toString());
+							
+							// sent users list to ALL clients
+							broadcastRegistration();
 							
 							// send a notification message to client
 							sendMessage("You successfully logged in as " + user.getLogin());
@@ -236,9 +279,13 @@ public class Client implements ServerObservable  {
 					case 12: // Logout
 						
 						user.setConnected(false);
-						user.setLogin("");
-						user.setPwd("");
+						user.setLogin(null);
+						user.setPwd(null);
+						user.setId(null);
 						sendUser(user);	
+						
+						// sent users list to ALL clients
+						broadcastRegistration();
 						
 						// send a notification message to client
 						sendMessage("You have been successfully disconnected from the chat");
@@ -249,6 +296,7 @@ public class Client implements ServerObservable  {
 					    break;
 					case 21: // Reception message
 						Message message = (Message) inputObjectFromClient.readObject();
+						User userFrom = (User) inputObjectFromClient.readObject();
 	
 						
 						String conversationKey = selectedUser.getLogin();
@@ -265,12 +313,13 @@ public class Client implements ServerObservable  {
 						
 						System.out.println(user.getConversation(conversationKey).size());
 
+						// TODO : ajouter vérification connecté
 						if(selectedUser == null) {
 							sendMessage("Please, select at least a user to chat with !");
 						} 
 						else 
 						{
-							sendMsgToUser(selectedUser, message);
+							sendMsgToUser(selectedUser, userFrom, message);
 							//broadcastToSelectedUsers(selectedUser, message);
 						}
 					    break;
@@ -278,8 +327,11 @@ public class Client implements ServerObservable  {
 					case 111: // User selection to chat with
 						selectedUser = (User) inputObjectFromClient.readObject();
 						
+						System.out.println(selectedUser.toString());
+						
+						// résupérer les conversations de l'utilisateur dans le HashMap
 						if(user.getConversation(selectedUser.getLogin()) != null) {
-							System.out.println("renvoi de " + user.getConversation(selectedUser.getLogin()).toArray());
+							System.out.println("renvoi de l'utilisateur sélectionné " + selectedUser.getLogin() + " " + selectedUser.getId());
 							
 							for(Message m : user.getConversation(selectedUser.getLogin())) 
 							{
@@ -360,24 +412,13 @@ public class Client implements ServerObservable  {
 			obs.notifyDisconnection(this);
 		}
 	}
-/*
+
 	@Override
-	public void broadcastToSelectedUsers(List l, Message message) {
-		for(ServerObserver obs : serverObservers) 
-		{
-			obs.broadcastToSelectedUsers(l, message);
-		}
-	}
-*/
-	@Override
-	public void sendMsgToUser(User u, Message msg)
+	public void sendMsgToUser(User selectedUser, User userFrom, Message msg)
 	{
-		
-		
 		for(ServerObserver obs : serverObservers) 
 		{
-			obs.sendMsgToUser(u, msg);
-		}
-		
+			obs.sendMsgToUser(selectedUser, userFrom, msg);
+		}	
 	}
 }
