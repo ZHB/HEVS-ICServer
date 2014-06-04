@@ -16,12 +16,14 @@ import java.util.Map;
 public class UserManager implements Serializable
 {
 
-	private static final String userFilePath = "./data/users.txt";
+	private static final String userFilePath = "./data";
+	private static final String userFileName = "users.txt";
+	private String userFilePathName = "";
 	private HashMap<String, User> users = new HashMap<String, User>();
 	
 	public UserManager()
 	{
-		
+		this.userFilePathName = userFilePath + "/" + userFileName;
 	}
 	
 	public HashMap<String, User> getUsers()
@@ -37,15 +39,17 @@ public class UserManager implements Serializable
 	// Load users data from the file
 	public void load()
 	{
+		
 		try
 		{
-	        File toRead = new File(userFilePath);
+	        File toRead = new File(userFilePathName);
 	        if (!toRead.exists())
 	        {
 	        	save();
 	        }
+	        
 	        FileInputStream fis = new FileInputStream(toRead);
-	        ObjectInputStream ois=new ObjectInputStream(fis);
+	        ObjectInputStream ois = new ObjectInputStream(fis);
 
 	        users = (HashMap<String, User>) ois.readObject();
 
@@ -56,8 +60,14 @@ public class UserManager implements Serializable
 		{
 			
 		}
+	}
+	
+	public void reload()
+	{
+		HashMap<String, User> tmp = users;
 		
-		//return users;
+		users.clear();
+		users = tmp;
 	}
 	
 	// Save users data to the file
@@ -65,7 +75,13 @@ public class UserManager implements Serializable
 	{
         try
         {
-        	FileOutputStream fos = new FileOutputStream(userFilePath);
+        	// check if the logs directory, if not create it
+    		File theDir = new File(userFilePath);
+    		if (!theDir.exists()) {
+    		    theDir.mkdir(); 
+    		}
+    		
+        	FileOutputStream fos = new FileOutputStream(userFilePathName);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
 			
 			oos.writeObject(users);
@@ -81,14 +97,14 @@ public class UserManager implements Serializable
 	public User getByLogin(String login) throws IOException, ClassNotFoundException
 	{
 		// Check if file exists
-		File f = new File(userFilePath);
+		File f = new File(userFilePathName);
 		
 		if(!f.exists())
 		{
 			return null;
 		}
 		
-		FileInputStream file = new FileInputStream(userFilePath);
+		FileInputStream file = new FileInputStream(userFilePathName);
 		ObjectInputStream ois = new ObjectInputStream(file);
 		
 		// read file and create the HashMap
@@ -128,14 +144,14 @@ public class UserManager implements Serializable
 	{
 		
 		// Check if file exists
-		File f = new File(userFilePath);
+		File f = new File(userFilePathName);
 		
 		if(!f.exists())
 		{
 			return false;
 		}
 		
-		FileInputStream file = new FileInputStream(userFilePath);
+		FileInputStream file = new FileInputStream(userFilePathName);
 		ObjectInputStream ois = new ObjectInputStream(file);
 		
 		// read file and create the HashMap
