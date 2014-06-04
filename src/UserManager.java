@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -7,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * This class save/load users informations
@@ -21,9 +23,11 @@ public class UserManager
 	private static final String userFileName = "users.txt";
 	private String userFilePathName = "";
 	private Map<String, User> users = new HashMap<String, User>();
+	private Logger logger; 
 	
-	public UserManager()
+	public UserManager(Logger logger)
 	{
+		this.logger = logger;
 		this.userFilePathName = userFilePath + "/" + userFileName;
 	}
 	
@@ -50,6 +54,7 @@ public class UserManager
 	        if (!toRead.exists())
 	        {
 	        	save();
+	        	logger.info("File " + userFilePathName + " created");
 	        }
 	        
 	        FileInputStream fis = new FileInputStream(toRead);
@@ -62,7 +67,7 @@ public class UserManager
 	    }
 		catch(Exception e)
 		{
-			
+			logger.severe(e.getMessage());
 		}
 	}
 	
@@ -75,6 +80,7 @@ public class UserManager
     		File theDir = new File(userFilePath);
     		if (!theDir.exists()) {
     		    theDir.mkdir(); 
+    		    logger.info("Directory " + userFilePath + " created");
     		}
     		
         	FileOutputStream fos = new FileOutputStream(userFilePathName);
@@ -86,29 +92,41 @@ public class UserManager
 		}
         catch (IOException e)
         {
-			e.printStackTrace();
+        	logger.severe(e.getMessage());
 		}
 	}
 	
-	public User getByLogin(String login) throws IOException, ClassNotFoundException
+	public User getByLogin(String login)
 	{
 		// Check if file exists
 		File f = new File(userFilePathName);
 		
 		if(!f.exists())
 		{
+			logger.warning("File " + userFilePathName + " doesn't exists");
 			return null;
 		}
 		
-		FileInputStream file = new FileInputStream(userFilePathName);
-		ObjectInputStream ois = new ObjectInputStream(file);
+		FileInputStream file;
+		try {
+			file = new FileInputStream(userFilePathName);
+			ObjectInputStream ois = new ObjectInputStream(file);
+			
+			// read file and create the HashMap
+			users = (HashMap<String, User>) ois.readObject();
+			
+			file.close();
+			ois.close();
+		} 
+		catch (IOException e) 
+		{
+			logger.severe(e.getMessage());
+		} 
+		catch (ClassNotFoundException e) 
+		{
+			logger.severe(e.getMessage());
+		}
 		
-		// read file and create the HashMap
-		users = (HashMap<String, User>) ois.readObject();
-		
-		file.close();
-		ois.close();
-		 
 		// get the user by his login (the HashMap key)
 		return users.get(login);
 	}
@@ -122,6 +140,8 @@ public class UserManager
 		// add the user to the map -> register
 		users.put(user.getLogin(), user);
 		save();
+		
+		logger.info("New user registered " + user.getLogin());
 	}
 	
 	/**
@@ -137,6 +157,8 @@ public class UserManager
 		users.remove(user.getLogin());
 		
 		save();
+		
+		logger.info("User " + user.getLogin() + " has unregistered");
 	}
 	
 	public boolean login(String name, String pwd) throws IOException, ClassNotFoundException
@@ -147,6 +169,7 @@ public class UserManager
 		
 		if(!f.exists())
 		{
+			logger.warning("The file " + userFilePathName + " doesn't exists");
 			return false;
 		}
 		
@@ -167,6 +190,8 @@ public class UserManager
 		if(u.getPwd().equals(pwd.trim())) {
 			return true;
 		}
+		
+		logger.warning("Loggin error for user " + u.getLogin() + ". The given password is incorrect");
 		
 		return false;
 	}

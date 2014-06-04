@@ -3,24 +3,25 @@ public class Main {
 
 	public static void main(String[] args)
 	{	
-		new ICServer(1);
+		int logLevel = 1;
 		
+		// read command line args
+		if(args.length > 0)
+		{
+			try {
+				logLevel = Integer.parseInt(args[0]);
+				
+				if(logLevel > 3 || logLevel < 1)
+				{
+					System.out.println("Argument " + args[0] + " must be between 1 and 3. Strarting server with log level 3");
+					logLevel = 3;
+				}
+		    } catch (NumberFormatException e) {
+		        System.err.println("Invalid log level argument. Argument " + args[0] + " must be an integer.");
+		        System.exit(1);
+		    }
+		}
 		
-		//UserManager um = new UserManager();
-		//User u1 = new User("Simeon", "1234");
-		//User u2 = new User("Vincent", "1234");
-		
-		
-//		um.addUser(u1);
-//		um.addUser(u2);
-//		um.save();
-		
-		
-		//um.load();
-		//um.showUsers();
-		
-		
-
+		ICServer server = new ICServer(logLevel);
 	}
-
 }

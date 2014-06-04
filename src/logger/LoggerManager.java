@@ -25,7 +25,7 @@ public class LoggerManager {
 	private int logLevel;
 		
 	
-	public Logger getLogger(int logLevel) throws SecurityException, IOException 
+	public Logger getLogger(int logLevel)
 	{
 		this.logLevel = logLevel;
 		
@@ -38,7 +38,11 @@ public class LoggerManager {
 		}
 		  
 		// define a new file handler and its log
-		fh = new FileHandler(logDirPath + "/" + dateNow + ".log", true);     
+		try {
+			fh = new FileHandler(logDirPath + "/" + dateNow + ".log", true);
+		} catch (SecurityException | IOException e) {
+			e.printStackTrace();
+		}     
 		myLogger.addHandler(fh);
 
 		//use a custom formatter 

@@ -9,14 +9,15 @@ import logger.LoggerManager;
 
 public class ICServer 
 {
+	private String servIp = "127.0.0.1";
+	private int servPort = 1096;
+	
 	private ServerSocket serverSocket = null;
 	private Thread connectionThread = null;
 	private Socket clientSocket = null;
-	private LoggerManager loggerMgr = new LoggerManager();
-	private Logger logger;
 	
-	private String servIp = "127.0.0.1";
-	private int servPort = 1096;
+	private LoggerManager loggerMgr;
+	private Logger logger;
 	
 	private Client c;
 	private UserManager userMgr;
@@ -29,14 +30,16 @@ public class ICServer
 	
 	public void init(int logLevel)
 	{
-		userMgr = new UserManager();
+		// initiate a new logger with the given level
+		loggerMgr = new LoggerManager();
+    	logger = loggerMgr.getLogger(logLevel);
+		        	
+		userMgr = new UserManager(logger);
 		userMgr.load();
-		
 		
 		try
         {
-        	// initiate a new logger with the given level
-        	logger = loggerMgr.getLogger(logLevel);
+     
         	
 			//InetAddress localAddress = InetAddress.getLocalHost();
         	InetAddress localAddress = InetAddress.getByName(servIp);
@@ -55,20 +58,6 @@ public class ICServer
         catch (IOException e1) 
 		{
         	logger.severe(e1.getMessage());
-		}
-	}
-	
-	/**
-	 * Send a message to all connected clients
-	 * 
-	 * @param message
-	 */
-	public void broadcast(String message)
-	{
-		
-		for (String key : clients.keySet()) 
-		{
-			clients.get(key).sendMessage(message);
 		}
 	}
 	
@@ -100,7 +89,7 @@ public class ICServer
 				} 
 				catch (IOException e)
 				{
-					e.printStackTrace();
+					logger.severe(e.getMessage());
 				}
 			}
 		}
@@ -125,12 +114,6 @@ public class ICServer
 		}
 
 		@Override
-		public void notifyMessage(String m) 
-		{
-			broadcast(m);
-		}
-
-		@Override
 		public void updateRegisteredUsersList() 
 		{
 			for (String key : clients.keySet()) 
@@ -142,7 +125,6 @@ public class ICServer
 				}
 			}
 		}
-		
 		
 		/**
 		 * @inheritDoc

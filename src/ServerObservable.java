@@ -13,10 +13,6 @@ public interface ServerObservable
 	
 	public void updateRegisteredUsersList();
 	
-	public void notifyMessage(String m);
-	
-	//public void broadcastToSelectedUsers(List l, Message messages);
-	
 	/**
 	 * Send a message to a desired user.
 	 * 

@@ -30,6 +30,7 @@ public class Client implements ServerObservable  {
 		this.clientSocket = clientSocket;
 		this.userMgr = userMgr;
 		
+		// create a random identifier for the current client connection
 		Random random = new Random();
 	    String tag = Long.toString(Math.abs(random.nextLong()), 36);
 	    this.id =  tag.substring(0, 8);
@@ -416,14 +417,14 @@ public class Client implements ServerObservable  {
 		serverObservers.remove(obs);
 	}
 
-	@Override
+	/*@Override
 	public void notifyMessage(String m) 
 	{
 		for(ServerObserver obs : serverObservers) 
 		{
 			obs.notifyMessage(m);
 		}
-	}
+	}*/
 
 	@Override
 	public void updateRegisteredUsersList() 

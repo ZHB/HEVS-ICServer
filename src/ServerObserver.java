@@ -6,13 +6,6 @@ public interface ServerObserver
 	public void notifyDisconnection();
 	
 	/**
-	 * inform that a new message has been submitted
-	 * 
-	 * @param m a formated string that represent the final message displayed in the chat
-	 */
-	public void notifyMessage(String m);
-	
-	/**
 	 * Update the list of registered users
 	 */
 	public void updateRegisteredUsersList();
