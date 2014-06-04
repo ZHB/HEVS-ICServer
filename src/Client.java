@@ -40,9 +40,7 @@ public class Client implements ServerObservable  {
 		
 		Random random = new Random();
 	    String tag = Long.toString(Math.abs(random.nextLong()), 36);
-	    this.id =  tag.substring(0, 8);
-	    
-	    System.out.println("Génération ID");
+	    this.id =  tag.substring(0, 12);
 	   
 		try 
 		{	
@@ -165,13 +163,10 @@ public class Client implements ServerObservable  {
 	 */
 	public void sendRegisteredUsers()
 	{
-		
-		HashMap<String, User> users = userMgr.getUsers();
-
 		try
 		{	
 			outputObjectToClient.writeByte(101); // send registered users list
-			outputObjectToClient.writeObject(users);
+			outputObjectToClient.writeObject(userMgr.getUsers());
 			outputObjectToClient.flush();
 		}
 		catch (IOException e)
@@ -243,17 +238,21 @@ public class Client implements ServerObservable  {
 					    break;
 					    
 					case 2: // Unregister
-						// get the User from the client
-						user = (User) inputObjectFromClient.readObject();
-						
+					
 						// unregister user
 						userMgr.unregister(user);
-						
+						userMgr.load();
+
 						// send a notification message to the client
 						sendMessage("You have been successfully unregistered from the chat");
 						
 						// sent users list to ALL clients
 						updateRegisteredUsersList();
+						
+						// notify GUI that the disconnection is successful
+						outputObjectToClient.writeByte(12);
+						outputObjectToClient.flush();
+						
 					    break;
 					    
 					case 11: // Login
@@ -266,7 +265,11 @@ public class Client implements ServerObservable  {
 							// update user status and send it to client
 							user.setConnected(true);
 							user.setId(id);
+							
 							userMgr.updateUser(user); // update user in users hashmap
+							userMgr.save();
+							userMgr.load();
+							
 							
 							// update the user to the client
 							sendUpdatedUser(user);	
@@ -295,8 +298,11 @@ public class Client implements ServerObservable  {
 					    
 					case 12: // Logout
 						user.setConnected(false);
+						userMgr.updateUser(user); // update user in users hashmap
 						
 						sendUpdatedUser(user);	
+						userMgr.save();
+						userMgr.load();
 						
 						// sent users list to ALL clients
 						updateRegisteredUsersList();
@@ -309,20 +315,37 @@ public class Client implements ServerObservable  {
 						outputObjectToClient.flush();
 						
 					    break;
+					case 13: // Close chat
+						System.out.println("Chat close server");
+						
+						user.setConnected(false);
+						user.setId(null);
+						
+						userMgr.updateUser(user);
+						userMgr.save();
+						userMgr.load();
+						
+						// sent users list to ALL clients
+						updateRegisteredUsersList();
+						
+						notifyDisconnection();
+						closeConnections();
+						
+					    break;
 					case 21: // Reception message
 						Message message = (Message) inputObjectFromClient.readObject();
 						User userFrom = (User) inputObjectFromClient.readObject();
 	
-						// add conversation to the user HashMap
-						addConversationToMap(selectedUser.getLogin(), message);
-
-						// TODO : ajouter vérification connecté
+						// check if the selected user exists
 						if(selectedUser == null) 
 						{
 							sendMessage("Please, select at least a user to chat with !");
 						} 
 						else 
 						{
+							// add conversation to the user HashMap
+							addConversationToMap(selectedUser.getLogin(), message);
+							
 							sendMsgToUser(selectedUser, userFrom, message);
 							//broadcastToSelectedUsers(selectedUser, message);
 						}
@@ -366,7 +389,7 @@ public class Client implements ServerObservable  {
 			finally
 			{		
 				// notify observers that the client disconnected
-				notifyDisconnection();
+				//notifyDisconnection();
 				
 				// close socket, input and ouput stream for the client
 				//closeConnections();
@@ -406,10 +429,11 @@ public class Client implements ServerObservable  {
 	}
 
 	@Override
-	public void updateRegisteredUsersList() {
+	public void updateRegisteredUsersList() 
+	{
 		for(ServerObserver obs : serverObservers) 
 		{
-			obs.updateRegisteredUsersList(this);
+			obs.updateRegisteredUsersList();
 		}
 		
 	}

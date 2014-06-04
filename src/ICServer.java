@@ -37,6 +37,7 @@ public class ICServer
 		userMgr = new UserManager();
 		userMgr.load();
 		
+		
 		try
         {
         	// initiate a new logger with the given level
@@ -135,11 +136,8 @@ public class ICServer
 		}
 
 		@Override
-		public void updateRegisteredUsersList(Client c) 
+		public void updateRegisteredUsersList() 
 		{
-			
-			//HashMap<String, User> users = userMgr.getUsers();
-
 			for (String key : clients.keySet()) 
 			{
 				// update registered users list for all connected clients
@@ -147,17 +145,21 @@ public class ICServer
 			}
 		}
 		
+		
+		/**
+		 * @inheritDoc
+		 */
 		@Override
 		public void sendMsgToUser(User selectedUser, User userFrom, Message msg)
 		{
-			
-			// register conversation to a file
-			
+			// send message only to user which is connected (and who has an active connection)
 			if(selectedUser.getId() != null) 
 			{
-				clients.get(selectedUser.getId()).sendMessage(userFrom, msg);
+				if(selectedUser.isConnected()) 
+				{
+					clients.get(selectedUser.getId()).sendMessage(userFrom, msg);
+				}
 			}
 		}
-
 	}
 }
