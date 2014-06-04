@@ -1,17 +1,21 @@
-import java.util.ArrayList;
-import java.util.List;
-
-
 public interface ServerObserver
 {
-	
+	/**
+	 * Inform that a client has disconnected from the chat
+	 */
 	public void notifyDisconnection();
 	
+	/**
+	 * inform that a new message has been submitted
+	 * 
+	 * @param m a formated string that represent the final message displayed in the chat
+	 */
 	public void notifyMessage(String m);
 	
+	/**
+	 * Update the list of registered users
+	 */
 	public void updateRegisteredUsersList();
-	
-	//public void broadcastToSelectedUsers(List l, Message messages);
 
 	/**
 	 * Send a message to a desired user.

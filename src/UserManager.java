@@ -13,20 +13,21 @@ import java.util.Map;
  * @author SB
  *
  */
-public class UserManager implements Serializable
+//public class UserManager implements Serializable
+public class UserManager
 {
 
 	private static final String userFilePath = "./data";
 	private static final String userFileName = "users.txt";
 	private String userFilePathName = "";
-	private HashMap<String, User> users = new HashMap<String, User>();
+	private Map<String, User> users = new HashMap<String, User>();
 	
 	public UserManager()
 	{
 		this.userFilePathName = userFilePath + "/" + userFileName;
 	}
 	
-	public HashMap<String, User> getUsers()
+	public Map<String, User> getUsers()
 	{
 		return users;
 	}
