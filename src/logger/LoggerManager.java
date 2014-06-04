@@ -1,5 +1,6 @@
 package logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -19,6 +20,7 @@ public class LoggerManager {
 	private Calendar currentDate = Calendar.getInstance();
 	private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 	private String dateNow = formatter.format(currentDate.getTime());
+	private String logDirPath = "./logs";
 	
 	private int logLevel;
 		
@@ -29,8 +31,14 @@ public class LoggerManager {
 		
 		setLogLevel();
 		
+		// check if the logs directory, if not create it
+		File theDir = new File(logDirPath);
+		if (!theDir.exists()) {
+		    theDir.mkdir(); 
+		}
+		  
 		// define a new file handler and its log
-		fh = new FileHandler(".\\logs\\" + dateNow + ".log", true);     
+		fh = new FileHandler(logDirPath + "/" + dateNow + ".log", true);     
 		
 		//fh = new FileHandler("output.log", 1048576, 1, true);
 		myLogger.addHandler(fh);

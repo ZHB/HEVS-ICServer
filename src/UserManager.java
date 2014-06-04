@@ -28,17 +28,9 @@ public class UserManager implements Serializable
 	{
 		return users;
 	}
-
-	/*
-	public void setUsers(HashMap<String, User> users)
-	{
-		this.users = users;
-	}
-	*/
 	
 	public void updateUser(User u) 
 	{
-		System.out.println("Update status: " + u.toString());
 		users.put(u.getLogin(), u);
 	}
 
