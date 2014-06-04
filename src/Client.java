@@ -109,7 +109,6 @@ public class Client implements ServerObservable  {
 		// check if the conversation exists otherwise create a new one
 		if(userToAdd.getConversation(conversationKey) == null) 
 		{
-			// create a new conversation for the user
 			userToAdd.createConversation(conversationKey);
 		}
 		
@@ -180,7 +179,7 @@ public class Client implements ServerObservable  {
 	 * @param void
 	 * @return void
 	 */
-	public void closeConnections() {
+	private void closeConnections() {
 		try 
 		{
 			outputObjectToClient.close();
@@ -229,7 +228,6 @@ public class Client implements ServerObservable  {
 							
 							// sent users list to ALL clients
 							updateRegisteredUsersList();
-							
 						} 
 						else 
 						{
@@ -260,8 +258,6 @@ public class Client implements ServerObservable  {
 						// get the User from the client
 						user = (User) inputObjectFromClient.readObject();
 						
-			
-						
 						if(userMgr.getByLogin(user.getLogin()) != null && userMgr.login(user.getLogin(), user.getPwd()))
 						{
 							// chargement de l'utilisateur 
@@ -275,7 +271,6 @@ public class Client implements ServerObservable  {
 							userMgr.save();
 							userMgr.load();
 
-							
 							// update the user to the client
 							sendUpdatedUser(user);	
 							
@@ -323,6 +318,8 @@ public class Client implements ServerObservable  {
 						if(selectedUser != null) 
 						{
 							userMgr.updateUser(selectedUser);
+							userMgr.save();
+							userMgr.load();
 						}
 						
 						if(user != null) 
@@ -330,18 +327,14 @@ public class Client implements ServerObservable  {
 							user.setConnected(false);
 							user.setId(null);
 							userMgr.updateUser(user);
+							userMgr.save();
+							userMgr.load();
 							
 							// sent users list to ALL clients
 							updateRegisteredUsersList();
 						}
 						
-						userMgr.save();
-						userMgr.load();
-						
 						done = true;
-						
-						notifyDisconnection();
-						closeConnections();
 						
 					    break;
 					case 21: // Reception message
@@ -358,15 +351,8 @@ public class Client implements ServerObservable  {
 							// add conversation to current User with selected User as conversation key
 							addConversationToMap(user, selectedUser.getLogin(), "["+message.getFormatedDate()+"] " + user.getLogin() + " :" + message.getMessage());
 							
-							
 							// add conversation to selectedUser with current user as key
 							addConversationToMap(selectedUser, user.getLogin(), "["+message.getFormatedDate()+"] " + user.getLogin() + " :" + message.getMessage());
-							
-							
-							// update and save users HashMap
-							//userMgr.updateUser(user);
-							//userMgr.updateUser(selectedUser);
-							//userMgr.save();
 							
 							// send messages respectively to selected user and to ourself
 							sendMsgToUser(selectedUser, userFrom, message);
@@ -376,7 +362,6 @@ public class Client implements ServerObservable  {
 							userMgr.updateUser(user);
 							userMgr.updateUser(selectedUser);
 							userMgr.save();
-							
 						}
 						
 					    break;
