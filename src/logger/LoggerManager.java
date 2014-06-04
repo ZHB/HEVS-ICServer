@@ -39,23 +39,21 @@ public class LoggerManager {
 		  
 		// define a new file handler and its log
 		fh = new FileHandler(logDirPath + "/" + dateNow + ".log", true);     
-		
-		//fh = new FileHandler("output.log", 1048576, 1, true);
 		myLogger.addHandler(fh);
-		//setLogLevel();
-		
+
 		//use a custom formatter 
-		//SocketFormatter myFormatter = new SocketFormatter();
 		fh.setFormatter(new SocketFormatter());
 
 		return myLogger;
 	}
 	
-	public void close() {
+	public void close() 
+	{
 		fh.close();
 	}
 	
-	private void setLogLevel() {
+	private void setLogLevel() 
+	{
 		//check valid values
 		if ((logLevel > 3) || (logLevel < 1))
 		{
@@ -74,6 +72,5 @@ public class LoggerManager {
 			break;
 		
 		}
-		
 	}
 }
