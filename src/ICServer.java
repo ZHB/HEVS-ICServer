@@ -141,7 +141,10 @@ public class ICServer
 			for (String key : clients.keySet()) 
 			{
 				// update registered users list for all connected clients
-				clients.get(key).sendRegisteredUsers();
+				if(clients.get(key).getUser().isConnected())
+				{
+					clients.get(key).sendRegisteredUsers();
+				}
 			}
 		}
 		

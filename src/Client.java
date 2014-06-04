@@ -40,7 +40,7 @@ public class Client implements ServerObservable  {
 		
 		Random random = new Random();
 	    String tag = Long.toString(Math.abs(random.nextLong()), 36);
-	    this.id =  tag.substring(0, 12);
+	    this.id =  tag.substring(0, 8);
 	   
 		try 
 		{	
@@ -104,25 +104,24 @@ public class Client implements ServerObservable  {
 		}
 	}
 	
-	private void addConversationToMap(String conversationKey, Message m)
+	private void addConversationToMap(User userToAdd, String conversationKey, String m)
 	{
 		// check if the conversation exists otherwise create a new one
-		if(user.getConversation(conversationKey) == null) 
+		if(userToAdd.getConversation(conversationKey) == null) 
 		{
 			// create a new conversation for the user
-			user.createConversation(conversationKey);
+			userToAdd.createConversation(conversationKey);
 		}
 		
 		// add a message to a conversation
-		user.setConversation(conversationKey, m);
-		
-		System.out.println(user.getConversation(conversationKey).size());
+		userToAdd.setConversation(conversationKey, m);
 	}
 	
 	public void sendMessage(User userFrom, Message message)
 	{
 		// add conversation to the user HashMap
-		addConversationToMap(user.getLogin(), message);
+		addConversationToMap(user, userFrom.getLogin(), "[" + message.getFormatedDate() + "] " + userFrom.getLogin() + ": " + message.getMessage());
+		addConversationToMap(userFrom, user.getLogin(), "[" + message.getFormatedDate() + "] " + userFrom.getLogin() + ": " + message.getMessage());
 		
 		try
 		{
@@ -207,8 +206,9 @@ public class Client implements ServerObservable  {
 			try
 			{
 				byte messageType;
+				boolean done = false;
 				
-				while(true) 
+				while(true && !done) 
 				{
 					messageType = inputObjectFromClient.readByte();
 
@@ -260,8 +260,13 @@ public class Client implements ServerObservable  {
 						// get the User from the client
 						user = (User) inputObjectFromClient.readObject();
 						
+			
+						
 						if(userMgr.getByLogin(user.getLogin()) != null && userMgr.login(user.getLogin(), user.getPwd()))
 						{
+							// chargement de l'utilisateur 
+							user = userMgr.getByLogin(user.getLogin());
+							
 							// update user status and send it to client
 							user.setConnected(true);
 							user.setId(id);
@@ -269,13 +274,10 @@ public class Client implements ServerObservable  {
 							userMgr.updateUser(user); // update user in users hashmap
 							userMgr.save();
 							userMgr.load();
-							
+
 							
 							// update the user to the client
 							sendUpdatedUser(user);	
-							
-							
-							System.out.println("Login :" + user.toString());
 							
 							// sent users list to ALL clients
 							updateRegisteredUsersList();
@@ -298,7 +300,9 @@ public class Client implements ServerObservable  {
 					    
 					case 12: // Logout
 						user.setConnected(false);
+						
 						userMgr.updateUser(user); // update user in users hashmap
+						userMgr.updateUser(selectedUser);
 						
 						sendUpdatedUser(user);	
 						userMgr.save();
@@ -316,17 +320,25 @@ public class Client implements ServerObservable  {
 						
 					    break;
 					case 13: // Close chat
-						System.out.println("Chat close server");
+						if(selectedUser != null) 
+						{
+							userMgr.updateUser(selectedUser);
+						}
 						
-						user.setConnected(false);
-						user.setId(null);
+						if(user != null) 
+						{
+							user.setConnected(false);
+							user.setId(null);
+							userMgr.updateUser(user);
+							
+							// sent users list to ALL clients
+							updateRegisteredUsersList();
+						}
 						
-						userMgr.updateUser(user);
 						userMgr.save();
 						userMgr.load();
 						
-						// sent users list to ALL clients
-						updateRegisteredUsersList();
+						done = true;
 						
 						notifyDisconnection();
 						closeConnections();
@@ -343,35 +355,44 @@ public class Client implements ServerObservable  {
 						} 
 						else 
 						{
-							// add conversation to the user HashMap
-							addConversationToMap(selectedUser.getLogin(), message);
+							// add conversation to current User with selected User as conversation key
+							addConversationToMap(user, selectedUser.getLogin(), "["+message.getFormatedDate()+"] " + user.getLogin() + " :" + message.getMessage());
 							
+							
+							// add conversation to selectedUser with current user as key
+							addConversationToMap(selectedUser, user.getLogin(), "["+message.getFormatedDate()+"] " + user.getLogin() + " :" + message.getMessage());
+							
+							
+							// update and save users HashMap
+							//userMgr.updateUser(user);
+							//userMgr.updateUser(selectedUser);
+							//userMgr.save();
+							
+							// send messages respectively to selected user and to ourself
 							sendMsgToUser(selectedUser, userFrom, message);
-							//broadcastToSelectedUsers(selectedUser, message);
+							sendMessage(user, message);
+							
+							// update and save users HashMap
+							userMgr.updateUser(user);
+							userMgr.updateUser(selectedUser);
+							userMgr.save();
+							
 						}
+						
 					    break;
 					    
 					case 111: // User selection to chat with
 						selectedUser = (User) inputObjectFromClient.readObject();
 						
-						System.out.println(selectedUser.toString());
-						
-						// résupérer les conversations de l'utilisateur dans le HashMap
-						if(user.getConversation(selectedUser.getLogin()) != null) {
-							System.out.println("renvoi de l'utilisateur sélectionné " + selectedUser.getLogin() + " " + selectedUser.getId());
-							
-							for(Message m : user.getConversation(selectedUser.getLogin())) 
-							{
-								System.out.println(m.getFormatedDate() + " " + m.getMessage());
-							}
-							
-							ArrayList<Message> messages = user.getConversation(selectedUser.getLogin());
-							
+						// get conversation in the HashMap from desired user (selected user as key)
+						if(user.getConversation(selectedUser.getLogin()) != null) 
+						{
+							ArrayList<String> messages = user.getConversation(selectedUser.getLogin());
+
 							outputObjectToClient.writeByte(121); // send registered users list
 							outputObjectToClient.writeObject(messages);
 							outputObjectToClient.flush();
 						}
-						
 						
 					    break;
 					}
@@ -379,20 +400,19 @@ public class Client implements ServerObservable  {
 			} 
 			catch (IOException e)
 			{
-				
+				e.printStackTrace();
 			} 
 			catch (ClassNotFoundException e)
 			{
 				e.printStackTrace();
 			}
-			
 			finally
 			{		
 				// notify observers that the client disconnected
-				//notifyDisconnection();
+				notifyDisconnection();
 				
 				// close socket, input and ouput stream for the client
-				//closeConnections();
+				closeConnections();
 			}
 		}
 	}

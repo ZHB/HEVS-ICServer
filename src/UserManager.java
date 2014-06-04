@@ -33,7 +33,10 @@ public class UserManager implements Serializable
 	
 	public void updateUser(User u) 
 	{
-		users.put(u.getLogin(), u);
+		if(u != null)
+		{
+			users.put(u.getLogin(), u);
+		}
 	}
 
 	// Load users data from the file
@@ -60,14 +63,6 @@ public class UserManager implements Serializable
 		{
 			
 		}
-	}
-	
-	public void reload()
-	{
-		HashMap<String, User> tmp = users;
-		
-		users.clear();
-		users = tmp;
 	}
 	
 	// Save users data to the file
@@ -114,7 +109,6 @@ public class UserManager implements Serializable
 		ois.close();
 		 
 		// get the user by his login (the HashMap key)
-		//System.out.println("getByLogin returned the user " + users.get(login).getLogin());
 		return users.get(login);
 	}
 	
@@ -135,8 +129,12 @@ public class UserManager implements Serializable
 	 */
 	public void unregister(User user)
 	{
+		// remove the conversation from the map
+		users.get(user.getLogin()).removeConversation(user.getLogin());
+				
 		// remove the user from the map -> unregister
 		users.remove(user.getLogin());
+		
 		save();
 	}
 	
@@ -161,7 +159,6 @@ public class UserManager implements Serializable
 		ois.close();
 		 
 		// get the user by his login (the HashMap key)
-		//System.out.println("getByLogin returned the user " + users.get(login).getLogin());
 		User u = users.get(name);
 		
 
